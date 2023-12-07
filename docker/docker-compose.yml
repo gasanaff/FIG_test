@@ -1,0 +1,50 @@
+version: "3.5"
+
+services:
+  nginx:
+    image: nginx:alpine
+    container_name: fig-test-nginx
+    working_dir: /application
+    volumes:
+      - ./nginx:/etc/nginx/conf.d
+      - ../:/application
+    ports:
+      - '8088:80'
+    depends_on:
+      - php-fpm
+    networks:
+      - fig-test-network
+
+  php-fpm:
+    build: php
+    container_name: fig-test-php-fpm
+    working_dir: /application
+    volumes:
+      - ../:/application
+      - ./php/php-ini-overrides.ini:/usr/local/etc/php/conf.d/99-overrides.ini
+      - ./php/xdebug.ini:/usr/local/etc/php/conf.d/xdebug.ini
+
+    ports:
+      - '9000'
+    networks:
+        - fig-test-network
+
+  postgres:
+      image: postgres:15
+      container_name: fig-test-postgres
+      restart: always
+      volumes:
+          - ./postgres-data:/var/lib/postgresql/data
+      environment:
+          POSTGRES_USER: user
+          POSTGRES_PASSWORD: 123456
+          POSTGRES_DB: app
+          PGDATA: /var/lib/postgresql/data/db-files/
+      ports:
+          - '5532:5432'
+      networks:
+          - fig-test-network
+
+networks:
+    fig-test-network:
+        driver: bridge
